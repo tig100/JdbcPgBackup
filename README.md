@@ -68,27 +68,27 @@ pg_backup/schemas.sql
 
 pg_backup/schemas/
 
-pg_backup/schemas/<schema1>/
+pg_backup/schemas/$schema1/
 
-pg_backup/schemas/<schema1>/indexes.sql
+pg_backup/schemas/$schema1/indexes.sql
 
-pg_backup/schemas/<schema1>/views.sql
+pg_backup/schemas/$schema1/views.sql
 
-pg_backup/schemas/<schema1>/constraints.sql
+pg_backup/schemas/$schema1/constraints.sql
 
-pg_backup/schemas/<schema1>/sequences.sql
+pg_backup/schemas/$schema1/sequences.sql
 
-pg_backup/schemas/<schema1>/tables.sql
+pg_backup/schemas/$schema1/tables.sql
 
-pg_backup/schemas/<schema1>/tables/
+pg_backup/schemas/$schema1/tables/
 
-pg_backup/schemas/<schema1>/tables/<table1>
+pg_backup/schemas/$schema1/tables/$table1
 
-pg_backup/schemas/<schema1>/tables/<table2>
+pg_backup/schemas/$schema1/tables/$table2
 
 ...
 
-pg_backup/schemas/<schema2>/
+pg_backup/schemas/$schema2/
 
 ...
 
@@ -151,3 +151,7 @@ Support for each of those may be added as needed, but as of now JdbcPgBackup
 supports all the PostgreSQL features that we actually use at Nabble, which 
 should cover the most common use cases.
 
+Finally, JdbcPgBackup does not support quoted SQL identifiers and special
+characters in database object names (schema, table and column names, etc), 
+because those are used directly as directory names or filenames in the backup 
+file. Again, this covers the most common use case and practice.
