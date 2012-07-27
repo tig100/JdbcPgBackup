@@ -8,18 +8,18 @@ Usage: JdbcPgBackup -m dump|restore [-h hostname] [-p port] [-t (timing)]
 [-s schema[,schema...]] [-n schema[,schema...]] [-b batchsize]
 
 Options:
--m mode, dump or restore, required.
--h hostname, defaults to localhost.
--p port, defaults to 5432.
--t collect and show timing for each step and other debug info.
--d database, defaults to the username if not supplied.
--U username, defaults to postgres
--P password
--f filename, if absent defaults to stdin/stdout.
--o do not dump data, schema definitions only
--s schemas to dump, comma separated list
--n schema names to restore to, if present must be of same length as the -s
--b batch size when doing a full dump, defaults to 10000 schemas in a batch
+-m mode, dump or restore, required;
+-h hostname, defaults to localhost;
+-p port, defaults to 5432;
+-t collect and show timing for each step and other debug info;
+-d database, defaults to the username if not supplied;
+-U username, defaults to postgres;
+-P password;
+-f filename, if absent defaults to stdin/stdout;
+-o do not dump data, schema definitions only;
+-s schemas to dump, comma separated list;
+-n schema names to restore to, if present must be of same length as the -s;
+-b batch size when doing a full dump, defaults to 10000 schemas in a batch.
 
 
 This application was developed to handle the backup of our PostgreSQL 
@@ -39,13 +39,13 @@ versions. Since it relies extensively on internal PostgreSQL
 implementation details, the system tables in the pg_catalog schema, it 
 is not guaranteed to continue to work with future PostgreSQL versions as 
 those are subject to change. The backup file it creates, however, uses 
-standard SQL to restore all database object, and is thus much more 
+standard SQL to restore all database objects, and is thus much more 
 likely to be future compatible and possible to restore on a newer 
 PostgreSQL version.
 
 The reason JdbcPgBackup uses the pg_catalog schema so extensively is 
 that the standard JDBC API for getting database metadata is 
-unfortunately too slow to be used, at least in our special use case of 
+unfortunately too slow to be useful, at least in our special use case of 
 thousands of schemas. As a consequence, JdbcPgBackup is not designed to 
 be used with other relational databases and is very PostgreSQL specific.
 
@@ -63,19 +63,33 @@ needed even modified, with schemas or tables moved or edited. The
 structure of the backup file is:
 
 pg_backup/
+
 pg_backup/schemas.sql
+
 pg_backup/schemas/
+
 pg_backup/schemas/<schema1>/
+
 pg_backup/schemas/<schema1>/indexes.sql
+
 pg_backup/schemas/<schema1>/views.sql
+
 pg_backup/schemas/<schema1>/constraints.sql
+
 pg_backup/schemas/<schema1>/sequences.sql
+
 pg_backup/schemas/<schema1>/tables.sql
+
 pg_backup/schemas/<schema1>/tables/
+
 pg_backup/schemas/<schema1>/tables/<table1>
+
 pg_backup/schemas/<schema1>/tables/<table2>
+
 ...
+
 pg_backup/schemas/<schema2>/
+
 ...
 
 
@@ -127,9 +141,9 @@ supported is: schemas, tables, indexes, views, sequences, constraints
 constraints only). In particular, JdbcPgBackup does not attempt to save and 
 restore users and permissions, as those are shared across all databases in 
 a cluster and a better tool to handle the backup of such global data is 
-pg_dumpall. JdbcPgBackup does, however, dump and restore the ownership of 
-schemas and all supported database objects, but does not attempt to save 
-and restore any non-default permissions on their access. 
+pg_dumpall. JdbcPgBackup does, however, save and restore the ownership of 
+schemas and all supported database objects, but does not attempt to preserve 
+any non-default permissions on their access. 
 Other PostgreSQL features not currently supported include: user defined 
 data types, table inheritance, tablespaces, descriptions, casts, enums, 
 text search, foreign data, custom operators, stored procedures and languages.
