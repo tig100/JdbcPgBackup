@@ -3,23 +3,24 @@
 
 A Java tool to backup and restore PostgreSQL databases using JDBC.
 
-Usage: JdbcPgBackup -m dump|restore [-h hostname] [-p port] [-t (timing)] 
+Usage:  
+java jdbcpgbackup.JdbcPgBackup -m dump|restore [-h hostname] [-p port] [-t (timing)] 
 [-d database] [-U user] [-P password] [-f filename] [-o (schema only)] 
 [-s schema[,schema...]] [-n schema[,schema...]] [-b batchsize]
 
-Options:
--m mode, dump or restore, required;
--h hostname, defaults to localhost;
--p port, defaults to 5432;
--t collect and show timing for each step and other debug info;
--d database, defaults to the username if not supplied;
--U username, defaults to postgres;
--P password;
--f filename, if absent defaults to stdin/stdout;
--o do not dump data, schema definitions only;
--s schemas to dump, comma separated list;
--n schema names to restore to, if present must be of same length as the -s;
--b batch size when doing a full dump, defaults to 10000 schemas in a batch.
+Options:  
+-m mode, dump or restore, required;  
+-h hostname, defaults to localhost;  
+-p port, defaults to 5432;  
+-t collect and show timing for each step and other debug info;  
+-d database, defaults to the username if not supplied;  
+-U username, defaults to postgres;  
+-P password;  
+-f filename, if absent defaults to stdin/stdout;  
+-o do not dump data, schema definitions only;  
+-s schemas to dump, comma separated list;  
+-n schema names to restore to, if present must be of same length as the -s;  
+-b batch size when doing a full dump, defaults to 10000 schemas in a batch.  
 
 
 This application was developed to handle the backup of our PostgreSQL 
@@ -62,36 +63,21 @@ it can be manipulated with standard zip and filesystem tools, and if
 needed even modified, with schemas or tables moved or edited. The 
 structure of the backup file is:
 
-pg_backup/
-
-pg_backup/schemas.sql
-
-pg_backup/schemas/
-
-pg_backup/schemas/$schema1/
-
-pg_backup/schemas/$schema1/indexes.sql
-
-pg_backup/schemas/$schema1/views.sql
-
-pg_backup/schemas/$schema1/constraints.sql
-
-pg_backup/schemas/$schema1/sequences.sql
-
-pg_backup/schemas/$schema1/tables.sql
-
-pg_backup/schemas/$schema1/tables/
-
-pg_backup/schemas/$schema1/tables/$table1
-
-pg_backup/schemas/$schema1/tables/$table2
-
-...
-
-pg_backup/schemas/$schema2/
-
-...
-
+    pg_backup/  
+    pg_backup/schemas.sql  
+    pg_backup/schemas/  
+    pg_backup/schemas/<schema1>/  
+    pg_backup/schemas/<schema1>/indexes.sql  
+    pg_backup/schemas/<schema1>/views.sql  
+    pg_backup/schemas/<schema1>/constraints.sql  
+    pg_backup/schemas/<schema1>/sequences.sql  
+    pg_backup/schemas/<schema1>/tables.sql  
+    pg_backup/schemas/<schema1>/tables/  
+    pg_backup/schemas/<schema1>/tables/<table1>  
+    pg_backup/schemas/<schema1>/tables/<table2>  
+    ...  
+    pg_backup/schemas/<schema2>/  
+    ...  
 
 where each *.sql file is a plain text file, containing the SQL DDL 
 statements needed to create the corresponding database objects - tables, 
