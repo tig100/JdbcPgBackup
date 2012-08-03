@@ -290,7 +290,7 @@ public final class ZipBackup {
 			printTimings();
 		} catch (Exception e) {
 			try {
-				con.rollback();
+				if (con != null) con.rollback();
 			} catch (SQLException ignore) {}
 			throw new RuntimeException(e.getMessage(), e);
 		} finally {
@@ -331,7 +331,7 @@ public final class ZipBackup {
 			printTimings();
 		} catch (Exception e) {
 			try {
-				con.rollback();
+				if (con != null) con.rollback();
 			} catch (SQLException ignore) {}
 			throw new RuntimeException(e.getMessage(), e);
 		} finally {
