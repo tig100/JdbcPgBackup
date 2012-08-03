@@ -276,18 +276,12 @@ public final class ZipBackup {
 	}
 
 	public void restoreSchemaTo(String schema, String toSchema) {
-		if (!exists()) {
-			throw new RuntimeException("backup file not found");
-		}
-		ZipFile zipFile = null;
 		Connection con = null;
 		try {
 			con = DriverManager.getConnection(jdbcUrl);
 			con.setAutoCommit(false);
-			zipFile = new ZipFile(new File(filename));
-			restoreSchema(schema, toSchema, toSchema, zipFile, con);
+			restoreSchemaTo(schema, toSchema, con);
 			con.commit();
-			printTimings();
 		} catch (Exception e) {
 			try {
 				if (con != null) con.rollback();
@@ -297,6 +291,21 @@ public final class ZipBackup {
 			try {
 				if (con != null) con.close();
 			} catch (SQLException ignore) {}
+		}
+	}
+
+	public void restoreSchemaTo(String schema, String toSchema, Connection con) {
+		if (!exists()) {
+			throw new RuntimeException("backup file not found");
+		}
+		ZipFile zipFile = null;
+		try {
+			zipFile = new ZipFile(new File(filename));
+			restoreSchema(schema, toSchema, toSchema, zipFile, con);
+			printTimings();
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage(), e);
+		} finally {
 			try {
 				if (zipFile != null) zipFile.close();
 			} catch (IOException ignore) {}
