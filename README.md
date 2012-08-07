@@ -15,7 +15,7 @@ Options:
 -t collect and show timing for each step and other debug info;  
 -d database, defaults to the username if not supplied;  
 -U username, defaults to postgres;  
--P password;  
+-P password, if absent also tries to read it from a ~/.pgpass file;  
 -f filename, if absent defaults to stdin/stdout;  
 -o do not dump data, schema definitions only;  
 -s schemas to dump, comma separated list;  

@@ -6,6 +6,7 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -641,9 +642,11 @@ public final class ZipBackup {
 		StringBuilder buf = new StringBuilder();
 		buf.append("jdbc:postgresql://");
 		String hostname = params.get("hostname");
-		buf.append(hostname == null ? "localhost" : hostname);
+		if (hostname == null) hostname = "localhost";
+		buf.append(hostname);
 		String port = params.get("port");
-		if (port != null) buf.append(":").append(port);
+		if (port == null) port = "5432";
+		buf.append(":").append(port);
 		buf.append("/");
 		String username = params.get("user");
 		if (username == null) username = "postgres";
@@ -654,6 +657,34 @@ public final class ZipBackup {
 		buf.append(username);
 		String password = params.get("password");
 		if (password != null) buf.append("&password=").append(password);
+		else {
+			File pgpass = new File(System.getProperty("user.home"), ".pgpass");
+			if (pgpass.exists()) {
+				BufferedReader r = null;
+				try {
+					r = new BufferedReader(new FileReader(pgpass));
+					String line;
+					while ((line = r.readLine()) != null) {
+						if (line.startsWith("#")) continue;
+						String[] entries = line.split(":");
+						if (entries.length != 5) throw new RuntimeException(
+								"unsupported pgpass file format, better specify password on command line");
+						if (! (hostname.equals(entries[0]) || "*".equals(entries[0])) ) continue;
+						if (! (port.equals(entries[1]) || "*".equals(entries[1])) ) continue;
+						if (! (database.equals(entries[2]) || "*".equals(entries[2])) ) continue;
+						if (! (username.equals(entries[3]) || "*".equals(entries[3])) ) continue;
+						buf.append("&password=").append(entries[4]);
+						break;
+					}
+				} catch (IOException e) {
+					throw new RuntimeException("failed to read the pgpass file");
+				} finally {
+					try {
+						if (r != null) r.close();
+					} catch (IOException ignore) {}
+				}
+			}
+		}
 		return buf.toString();
 	}
 
