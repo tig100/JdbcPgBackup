@@ -127,8 +127,11 @@ public final class ZipBackup {
 			} catch (SQLException ignore) {}
 			try {
 				if (zos != null) zos.close();
-			} catch (IOException ignore) {}
+			} catch (IOException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
 		}
+		debug("finished full dump at " + new Date());
 	}
 
 	public void dump(Iterable<String> schemaNames, DataFilter dataFilter) {
@@ -174,7 +177,9 @@ public final class ZipBackup {
 		} finally {
 			try {
 				if (zos != null) zos.close();
-			} catch (IOException ignore) {}
+			} catch (IOException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
 		}
 	}
 
@@ -352,6 +357,7 @@ public final class ZipBackup {
 				if (zipFile != null) zipFile.close();
 			} catch (IOException ignore) {}
 		}
+		debug("finished full restore at " + new Date());
 	}
 
 	private void restoreSchema(String fromSchemaName, String toSchemaName, String toOwner, ZipFile zipFile, Connection con) {
