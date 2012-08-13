@@ -120,7 +120,7 @@ final class Sequence extends DbBackupObject {
 	}
 
 	@Override
-	protected StringBuilder appendCreateSql(StringBuilder buf) {
+	protected StringBuilder appendCreateSql(StringBuilder buf, DataFilter dataFilter) {
 		buf.append("CREATE SEQUENCE ");
 		buf.append(getName());
 		if (increment_by != 1) {
@@ -140,12 +140,18 @@ final class Sequence extends DbBackupObject {
 		buf.append(" START ");
 		buf.append(start_value);
 		buf.append(";\n");
-		buf.append("SELECT setval('");
-		buf.append(getName());
-		buf.append("',");
-		buf.append(last_value);
-		buf.append(") ;\n");
+		if (dataFilter.dumpData(schema.getName(), name)) {
+			buf.append("SELECT setval('");
+			buf.append(getName());
+			buf.append("',");
+			buf.append(last_value);
+			buf.append(") ;\n");
+		}
 		return buf;
 	}
 
+	@Override
+	protected StringBuilder appendCreateSql(StringBuilder buf) {
+		throw new UnsupportedOperationException();
+	}
 }

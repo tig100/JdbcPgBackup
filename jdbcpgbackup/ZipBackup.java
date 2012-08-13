@@ -33,7 +33,7 @@ public final class ZipBackup {
 	public static final int DEFAULT_BATCH_SIZE = 10000;
 
 	private final String jdbcUrl;
-	private final String filename;
+	private final File file;
 
 	private DBOFactory<Schema> schemaFactory = new Schema.SchemaFactory();
 	private DBOFactory<View> viewFactory = new View.ViewFactory();
@@ -42,42 +42,15 @@ public final class ZipBackup {
 	private DBOFactory<Index> indexFactory = new Index.IndexFactory();
 	private DBOFactory<Constraint> constraintFactory = new Constraint.ConstraintFactory();
 
-	public ZipBackup(String filename, String jdbcUrl) {
-		this.filename = filename;
+	public ZipBackup(File file, String jdbcUrl) {
+		this.file = file;
 		this.jdbcUrl = jdbcUrl;
 	}
 
 	public ZipBackup(Map<String,String> params) {
-		this(params.get("filename"), buildJdbcUrl(params));
+		this(params.get("filename") == null ? null : new File(params.get("filename")),
+				buildJdbcUrl(params));
 	}
-
-	public boolean exists() {
-		if (filename == null) return false;
-		return new File(filename).exists();
-	}
-
-	/*
-	public List<String> schemasInDatabase() {
-		List<String> schemaNames = new ArrayList<String>();
-		Connection con = null;
-		try {
-			con = DriverManager.getConnection(jdbcUrl);
-			con.setReadOnly(true);
-			timerStart("schemas");
-			Iterable<Schema> schemas = schemaFactory.getDbBackupObjects(con, null);
-			for (Schema schema : schemas) 
-				schemaNames.add(schema.getName());
-			timerEnd("schemas");
-		} catch (SQLException e) {
-			throw new RuntimeException("error getting database schemas", e);
-		} finally {
-			try {
-				if (con != null) con.close();
-			} catch (SQLException ignore) {}
-		}
-		return schemaNames;
-	}
-	 */
 
 	public void dumpAll(DataFilter dataFilter) {
 		dumpAll(dataFilter, DEFAULT_BATCH_SIZE);
@@ -97,7 +70,7 @@ public final class ZipBackup {
 			timerStart("schemas");
 			Collection<Schema> schemas = cachingSchemaFactory.getDbBackupObjects(con, null);
 			setTotalCount(schemas.size());
-			dumpSchemasSql(schemas, con, zos);
+			dumpSchemasSql(schemas, dataFilter, con, zos);
 			debug(schemas.size() + " schemas to be dumped");
 			timerEnd("schemas");
 			debug("begin dumping schemas");
@@ -164,7 +137,7 @@ public final class ZipBackup {
 				schemas.add(schema);
 			}
 			setTotalCount(schemas.size());
-			dumpSchemasSql(schemas, con, zos);
+			dumpSchemasSql(schemas, dataFilter, con, zos);
 			timerEnd("schemas");
 			for (Schema schema : schemas) {
 				dump(schema, dataFilter, con, zos);
@@ -184,10 +157,9 @@ public final class ZipBackup {
 	}
 
 	private ZipOutputStream getZipOutputStream() throws IOException {
-		if (filename != null) {
-			File file = new File(filename);
-			if (file.exists()) {
-				throw new RuntimeException("destination file exists");
+		if (file != null) {
+			if (file.length() > 0) {
+				throw new RuntimeException("destination file is not empty");
 			}
 			return new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
 		} else {
@@ -195,10 +167,10 @@ public final class ZipBackup {
 		}
 	}
 
-	private void dumpSchemasSql(Iterable<Schema> schemas, Connection con, ZipOutputStream zos) {
+	private void dumpSchemasSql(Iterable<Schema> schemas, DataFilter dataFilter, Connection con, ZipOutputStream zos) {
 		try {
 			zos.putNextEntry(new ZipEntry(zipRoot));
-			putSqlZipEntry(zos, zipRoot+"schemas.sql", schemas);
+			putSqlZipEntry(zos, zipRoot+"schemas.sql", schemas, dataFilter);
 			zos.putNextEntry(new ZipEntry(zipRoot + "schemas/"));
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -212,11 +184,11 @@ public final class ZipBackup {
 
 			timerStart("sequences");
 			Iterable<Sequence> sequences = sequenceFactory.getDbBackupObjects(con, schema);
-			putSqlZipEntry(zos, schemaRoot + "sequences.sql", sequences);
+			putSqlZipEntry(zos, schemaRoot + "sequences.sql", sequences, dataFilter);
 			timerEnd("sequences");
 
 			Iterable<Table> tables = tableFactory.getDbBackupObjects(con, schema);
-			putSqlZipEntry(zos, schemaRoot + "tables.sql", tables);
+			putSqlZipEntry(zos, schemaRoot + "tables.sql", tables, dataFilter);
 
 			timerStart("table data");
 			zos.putNextEntry(new ZipEntry(schemaRoot + "tables/"));
@@ -230,17 +202,17 @@ public final class ZipBackup {
 
 			timerStart("views");
 			Iterable<View> views = viewFactory.getDbBackupObjects(con, schema);
-			putSqlZipEntry(zos, schemaRoot + "views.sql", views);
+			putSqlZipEntry(zos, schemaRoot + "views.sql", views, dataFilter);
 			timerEnd("views");
 
 			timerStart("indexes");
 			Iterable<Index> indexes = indexFactory.getDbBackupObjects(con, schema);
-			putSqlZipEntry(zos, schemaRoot + "indexes.sql", indexes);
+			putSqlZipEntry(zos, schemaRoot + "indexes.sql", indexes, dataFilter);
 			timerEnd("indexes");
 
 			timerStart("constraints");
 			Iterable<Constraint> constraints = constraintFactory.getDbBackupObjects(con, schema);
-			putSqlZipEntry(zos, schemaRoot + "constraints.sql", constraints);
+			putSqlZipEntry(zos, schemaRoot + "constraints.sql", constraints, dataFilter);
 			timerEnd("constraints");
 
 			processedSchema();
@@ -252,21 +224,19 @@ public final class ZipBackup {
 		}
 	}
 
-	private void putSqlZipEntry(ZipOutputStream zos, String name, Iterable<? extends DbBackupObject> dbBackupObjects) throws IOException {
+	private void putSqlZipEntry(ZipOutputStream zos, String name,
+			Iterable<? extends DbBackupObject> dbBackupObjects, DataFilter dataFilter) throws IOException {
 		zos.putNextEntry(new ZipEntry(name));
 		for (DbBackupObject o : dbBackupObjects) {
-			zos.write(o.getSql().getBytes());
+			zos.write(o.getSql(dataFilter).getBytes());
 		}
 	}
 
 
 	public List<String> schemasInBackup() {
-		if (!exists()) {
-			throw new RuntimeException("backup file not found");
-		}
 		ZipFile zipFile = null;
 		try {
-			zipFile = new ZipFile(new File(filename));
+			zipFile = new ZipFile(file);
 			return new ArrayList<String>(getSchemaTables(zipFile).keySet());
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -301,12 +271,9 @@ public final class ZipBackup {
 	}
 
 	public void restoreSchemaTo(String schema, String toSchema, Connection con) {
-		if (!exists()) {
-			throw new RuntimeException("backup file not found");
-		}
 		ZipFile zipFile = null;
 		try {
-			zipFile = new ZipFile(new File(filename));
+			zipFile = new ZipFile(file);
 			restoreSchema(schema, toSchema, toSchema, zipFile, con);
 			printTimings();
 		} catch (IOException e) {
@@ -319,16 +286,13 @@ public final class ZipBackup {
 	}
 
 	public void restoreAll() {
-		if (!exists()) {
-			throw new RuntimeException("backup file not found");
-		}
 		debug("starting full restore at " + new Date());
 		ZipFile zipFile = null;
 		Connection con = null;
 		try {
 			con = DriverManager.getConnection(jdbcUrl);
 			con.setAutoCommit(false);
-			zipFile = new ZipFile(new File(filename));
+			zipFile = new ZipFile(file);
 
 			timerStart("schemas");
 			restoreSchemasSql(zipFile, con);
@@ -380,10 +344,10 @@ public final class ZipBackup {
 			execSqlZipEntry(zipFile, con, sequencesSql, isNewSchema);
 			timerEnd("sequences");
 
-			timerStart("table columns");
+			timerStart("tables");
 			ZipEntry tablesSql = zipFile.getEntry(schemaRoot + "tables.sql");
 			execSqlZipEntry(zipFile, con, tablesSql, isNewSchema);
-			timerEnd("table columns");
+			timerEnd("tables");
 
 			timerStart("table data");
 			Set<ZipEntry> tableEntries = getSchemaTables(zipFile).get(fromSchemaName);
@@ -475,13 +439,14 @@ public final class ZipBackup {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
+				String schema = parseSchema(entry.getName());
+				if (schema == null) continue;
+				Set<ZipEntry> tables = schemaTables.get(schema);
+				if (tables == null) {
+					tables = new HashSet<ZipEntry>();
+					schemaTables.put(schema, tables);
+				}
 				if (isTable(entry.getName())) {
-					String schema = parseSchema(entry.getName());
-					Set<ZipEntry> tables = schemaTables.get(schema);
-					if (tables == null) {
-						tables = new HashSet<ZipEntry>();
-						schemaTables.put(schema, tables);
-					}
 					tables.add(entry);
 				}
 			}
@@ -545,7 +510,9 @@ public final class ZipBackup {
 		int i = name.indexOf("/schemas/");
 		if (i < 0) return null;
 		int from = i + "/schemas/".length();
-		return name.substring(from, name.indexOf('/', from)); 
+		int to = name.indexOf('/', from);
+		if (to < 0) return null;
+		return name.substring(from, to); 
 	}
 
 

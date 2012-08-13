@@ -124,7 +124,7 @@ class Index extends DbBackupObject {
 	}
 
 	@Override
-	String getSql() {
+	String getSql(DataFilter dataFilter) {
 		return definition.replace(" ON " + schema.getName() + ".", " ON ") + " ;\n";  // remove schema name
 	}
 

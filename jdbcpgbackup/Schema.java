@@ -137,7 +137,7 @@ final class Schema extends DbBackupObject {
 	}
 
 	@Override
-	String getSql() {
+	String getSql(DataFilter dataFilter) {
 		return "CREATE SCHEMA " + name + " AUTHORIZATION " + owner + " ;\n";
 	}
 
