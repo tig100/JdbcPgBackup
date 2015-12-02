@@ -3,10 +3,27 @@
 
 A Java tool to backup and restore PostgreSQL databases using JDBC.
 
+QuickStart:
+
+1. `git clone https://github.com/tig100/JdbcPgBackup.git && cd JdbcPgBackup`
+1. Download jdbc lib from https://jdbc.postgresql.org/, and copy it into a `lib` folder
+1. Compile
+
+        javac -cp ./jdbcpgbackup/:./lib/postgresql-9.3-1103.jdbc3.jar -d classes jdbcpgbackup/*.java
+1. Run:
+
+        java -cp ./lib/postgresql-9.1-902.jdbc4.jar:./classes jdbcpgbackup.JdbcPgBackup \
+          -m dump -h dbhost -t -d dbname -U dbuser -P dbpassword \
+          -f output.dump
+
 Usage:  
-java jdbcpgbackup.JdbcPgBackup -m dump|restore [-h hostname] [-p port] [-t (timing)] 
-[-d database] [-U user] [-P password] [-f filename] [-o (schema only)] 
-[-s schema[,schema...]] [-n schema[,schema...]] [-b batchsize]
+
+```
+java jdbcpgbackup.JdbcPgBackup -m dump|restore 
+  [-h hostname] [-p port] [-t (timing)] 
+  [-d database] [-U user] [-P password] [-f filename] [-o (schema only)] 
+  [-s schema[,schema...]] [-n schema[,schema...]] [-b batchsize]
+```
 
 Options:  
 -m mode, dump or restore, required;  
