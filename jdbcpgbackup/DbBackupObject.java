@@ -19,7 +19,7 @@ abstract class DbBackupObject {
 	}
 
 	String getFullname() {
-		return schema.getName() + "." + name;
+		return "\"" + schema.getName() + "\"." + name;
 	}
 
 	final String getOwner() {
