@@ -86,7 +86,7 @@ final class Sequence extends DbBackupObject {
 		Sequence sequence = null;
 		try {
 			stmt = con.prepareStatement(
-					"SELECT * FROM " + schema.getName() + "." + sequenceName);
+					"SELECT * FROM \"" + schema.getName() + "\"." + sequenceName);
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next())
 				sequence = new Sequence(sequenceName, rs, schema, owner);

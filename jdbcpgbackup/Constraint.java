@@ -116,7 +116,7 @@ final class Constraint extends DbBackupObject {
 	private Constraint(String name, Schema schema, String tableName, String tableOwner, String definition, char type) {
 		super(name, schema, tableOwner);
 		this.tableName = tableName;
-		this.definition = definition.replace(" REFERENCES " + schema.getName() + ".", " REFERENCES "); // remove schema name
+		this.definition = definition.replace(" REFERENCES \"" + schema.getName() + "\".", " REFERENCES "); // remove schema name
 		this.type = type;
 	}
 
