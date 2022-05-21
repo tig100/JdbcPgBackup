@@ -27,6 +27,7 @@ jobs:
           name: Package
           path: build/libs
       - name: Release Package
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
