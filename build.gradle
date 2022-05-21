@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+mainClassName = 'jdbcpgbackup.JdbcPgBackup'
+
+//create a single Jar with all dependencies
+jar {
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+    manifest {
+        attributes "Main-Class": "$mainClassName"
+        archiveBaseName = 'JdbcPgBackup'
+        archiveVersion = '0.1.0'
+    }
+
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.3.5'
+}
+
